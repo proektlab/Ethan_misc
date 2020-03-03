@@ -1,3 +1,17 @@
+% paths
+global synology_dir;
+
+if isempty(synology_dir)
+    if ispc
+        synology_dir = 'Z:';
+    else
+        synology_dir = '/synology';
+    end
+end
+
+addpath(fullfile(synology_dir, 'Andi', 'Matlab'));
+addpath(fullfile(synology_dir, 'brenna', 'eeglab2019_1'));
+
 % disable axis toolbar and datatip interaction (which slows things down)
 set(groot, 'defaultFigureCreateFcn', @(fig,~) addToolbarExplorationButtons(fig));
 set(groot, 'defaultAxesCreateFcn', getAxesCreateFcn('zba'));
