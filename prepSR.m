@@ -10,3 +10,5 @@ raw_dir = fullfile(project_dir, 'RawData');
 processed_lfp_dir = fullfile(project_dir, 'meanSubtracted_fullTrace');
 results_dir = fullfile(project_dir, 'forEthan', 'spec-state-trans');
 script_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'spec-state-trans');
+
+addpath(script_dir);
