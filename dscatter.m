@@ -84,6 +84,11 @@ if isvector(X)
         assert(ischar(varargin{1}), 'Too many input variables (more than 3)!');
     end
 else
+    if ~any(size(X, 2) == [2, 3])
+        % try transposing
+        X = X.';
+    end
+    
     ndims = size(X, 2);
     assert(ndims == 2 || ndims == 3, 'Too many input variables (more than 3)!');
     is3d = ndims == 3;
