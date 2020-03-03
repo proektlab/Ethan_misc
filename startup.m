@@ -10,7 +10,7 @@ if isempty(synology_dir)
 end
 
 addpath(fullfile(synology_dir, 'Andi', 'Matlab'));
-addpath(fullfile(synology_dir, 'brenna', 'eeglab2019_1'));
+addpath(fullfile(synology_dir, 'brenna', 'Software', 'eeglab2019_1'));
 
 % disable axis toolbar and datatip interaction (which slows things down)
 set(groot, 'defaultFigureCreateFcn', @(fig,~) addToolbarExplorationButtons(fig));
