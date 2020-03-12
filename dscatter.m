@@ -199,6 +199,7 @@ if is3d
     else
         h = scatter3(X(:, 1), X(:, 2), X(:, 3), msize, col, marker);
     end
+    view(3);
     
 else
     okTypes = {'surf','mesh','contour','image','scatter'};
