@@ -9,7 +9,6 @@ if isempty(synology_dir)
     end
 end
 
-addpath(fullfile(synology_dir, 'Andi', 'Matlab'));
 addpath(fullfile(synology_dir, 'brenna', 'Software', 'eeglab2019_1'));
 
 % disable axis toolbar and datatip interaction (which slows things down)
