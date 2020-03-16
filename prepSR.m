@@ -1,16 +1,17 @@
-global synology_dir;
-global project_dir;
-global raw_dir;
 global processed_lfp_dir;
 global script_dir;
 global results_dir;
 global snippits_dir;
 
-project_dir = fullfile(synology_dir, 'brenna', 'States_rats');
-raw_dir = fullfile(project_dir, 'RawData');
-processed_lfp_dir = fullfile(project_dir, 'meanSubtracted_fullTrace');
-results_dir = fullfile(project_dir, 'forEthan', 'spec-state-trans');
-script_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'spec-state-trans');
-snippits_dir = fullfile(project_dir, 'Snippits');
+% ** Change the below to local location of Blackwood Box folder: **
+box_dir = 'D:\Box Sync\NeuroCore\2020 Student Folders\Blackwood';
 
+this_dir = fileparts(mfilename('fullpath'));
+
+processed_lfp_dir = fullfile(box_dir, 'raw_preprocessed_meansub');
+results_dir = fullfile(box_dir, 'results');
+script_dir = fullfile(this_dir, '..', 'spec-state-trans');
+snippits_dir = fullfile(box_dir, 'snippits');
+
+addpath(this_dir);
 addpath(script_dir);
