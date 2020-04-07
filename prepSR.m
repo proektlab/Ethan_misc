@@ -15,3 +15,6 @@ snippits_dir = fullfile(box_dir, 'snippits');
 
 addpath(this_dir);
 addpath(script_dir);
+
+% other dependencies
+addpath(fullfile(this_dir, '..', 'SpectralAnalysis'));
