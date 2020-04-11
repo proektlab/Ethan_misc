@@ -19,3 +19,4 @@ addpath(script_dir);
 
 % other dependencies
 addpath(fullfile(this_dir, '..', 'SpectralAnalysis'));
+addpath(fullfile(this_dir, '..', 'NonNegativeMatrixFactorization'));
