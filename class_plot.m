@@ -54,6 +54,7 @@ colors = jet(n_classes);
 halfdt = mean(diff(xaxis)) / 2;
 
 h = gobjects(n_classes, 1);
+newplot;
 
 for kC = 1:n_classes
     class = classes(kC);
