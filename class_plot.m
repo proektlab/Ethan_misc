@@ -13,6 +13,7 @@ assert(~isempty(varargin), 'Must at least provide class_vec input');
 class_vec = varargin{end};
 assert(isvector(class_vec) && isnumeric(class_vec) && isreal(class_vec), 'class_vec must be a real vector');
 n_pts = length(class_vec);
+class_vec = class_vec(:);
 
 % check optional arguments
 optargs = varargin(1:end-1);
@@ -46,7 +47,7 @@ end
 
 assert(isempty(optargs), 'Too many or invalid arguments (see help for syntax)');
 
-classes = unique(class_vec);
+classes = unique(class_vec(~isnan(class_vec)));
 n_classes = length(classes);
 colors = jet(n_classes);
 
