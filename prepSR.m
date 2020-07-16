@@ -21,3 +21,9 @@ addpath(script_dir);
 addpath(fullfile(this_dir, '..', 'SpectralAnalysis'));
 addpath(fullfile(this_dir, '..', 'NonNegativeMatrixFactorization'));
 addpath(fullfile(this_dir, '..', 'Violinplot-Matlab'));
+addpath(fullfile(this_dir, '..', 'pmtk3'));
+
+% Initialize pmtk3
+if ~exist('hmmFit', 'file')
+    initPmtk3;
+end
