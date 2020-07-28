@@ -18,6 +18,6 @@ snippits_dir = fullfile(project_dir, 'Snippits');
 addpath(script_dir);
 
 % other dependencies
-addpath(fullfile(this_dir, '..', 'SpectralAnalysis'));
-addpath(fullfile(this_dir, '..', 'NonNegativeMatrixFactorization'));
-addpath(fullfile(this_dir, '..', 'Violinplot-Matlab'));
+addpath(fullfile(synology_dir, 'code', 'SpectralAnalysis'));
+addpath(fullfile(synology_dir, 'code', 'NonNegativeMatrixFactorization'));
+addpath(fullfile(synology_dir, 'code', 'Plotting', 'Violinplot-Matlab'));
