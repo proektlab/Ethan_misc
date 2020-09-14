@@ -1,23 +1,21 @@
+function sr_dirs = prepSR
 global synology_dir;
-global project_dir;
-global raw_dir;
-global processed_lfp_dir;
-global script_dir;
-global results_dir;
-global snippits_dir;
 
 this_dir = fileparts(mfilename('fullpath'));
 
-project_dir = fullfile(synology_dir, 'brenna', 'States_rats');
-raw_dir = fullfile(project_dir, 'RawData');
-processed_lfp_dir = fullfile(project_dir, 'meanSubtracted_fullTrace');
-results_dir = fullfile(project_dir, 'forEthan', 'spec-state-trans');
-script_dir = fullfile(this_dir, '..', 'spec-state-trans');
-snippits_dir = fullfile(project_dir, 'Snippits');
+sr_dirs.project = fullfile(synology_dir, 'brenna', 'States_rats');
+sr_dirs.raw = fullfile(sr_dirs.project, 'RawData');
+sr_dirs.processed_lfp = fullfile(sr_dirs.project, 'meanSubtracted_fullTrace');
+sr_dirs.results = fullfile(sr_dirs.project, 'forEthan', 'spec-state-trans');
+sr_dirs.script = fullfile(this_dir, '..', 'spec-state-trans');
+sr_dirs.snippits = fullfile(sr_dirs.project, 'Snippits');
 
-addpath(script_dir);
+addpath(sr_dirs.script);
+addpath(fullfile(sr_dirs.script, 'pipeline'));
 
 % other dependencies
 addpath(fullfile(synology_dir, 'code', 'SpectralAnalysis'));
 addpath(fullfile(synology_dir, 'code', 'NonNegativeMatrixFactorization'));
 addpath(fullfile(synology_dir, 'code', 'Plotting', 'Violinplot-Matlab'));
+
+end
