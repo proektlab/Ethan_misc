@@ -32,18 +32,3 @@ for i = 1:m
 end
 
 end
-
-% compute entropy for each column of X
-function ent = class_entropy(X, classes)
-[n, m] = size(X);
-ent = zeros(1, m);
-if n == 0
-    return;
-end
-
-for kK = 1:length(classes)
-    pK = sum(X == classes(kK)) / n;
-    new_ent = ent - pK .* log2(pK);
-    ent(pK > 0) = new_ent(pK > 0);
-end
-end
