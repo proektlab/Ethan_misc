@@ -74,7 +74,11 @@ classes = unique(all_classes(~isnan(all_classes)));
 n_classes = length(classes);
 colors = jet(n_classes);
 
-halfdt = mean(diff(xaxis)) / 2;
+tsteps = diff(xaxis);
+dt = min(tsteps);
+% identify gaps as places where the timestep is different
+before_gap = [tsteps > dt, false];
+after_gap = [false, before_gap(1:end-1)];
 
 h = gobjects(n_classes, 1);
 newplot;
@@ -88,15 +92,15 @@ for kC = 1:n_classes
     for kV = 1:n_vecs
         class_vec = class_vecs{kV};
 
-        is_class_start = [nan; class_vec(1:end-1)] ~= class & class_vec(:) == class;
-        is_class_end = class_vec(:) == class & [class_vec(2:end); nan] ~= class;
+        is_class_start = class_vec(:) == class & ([nan; class_vec(1:end-1)] ~= class | after_gap(:));
+        is_class_end = class_vec(:) == class & ([class_vec(2:end); nan] ~= class | before_gap(:));
 
 
         class_start_times = xaxis(is_class_start);
-        class_start_times = max(xaxis(1), class_start_times - halfdt);
+        class_start_times = max(xaxis(1), class_start_times - dt/2);
 
         class_end_times = xaxis(is_class_end);
-        class_end_times = min(xaxis(end), class_end_times + halfdt);
+        class_end_times = min(xaxis(end), class_end_times + dt/2);
 
         ylims = ylims_all(kV, :);
 
