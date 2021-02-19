@@ -1,13 +1,5 @@
 % paths
-global synology_dir;
-
-if isempty(synology_dir)
-    if ispc
-        synology_dir = 'Z:';
-    else
-        synology_dir = '/synology';
-    end
-end
+synology_dir = get_synology_dir;
 
 addpath(fullfile(synology_dir, 'brenna', 'Software', 'eeglab2019_1'));
 

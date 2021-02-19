@@ -3,9 +3,7 @@ function sr_dirs = prepSR
 % For non-Proekt Lab users: modify/rewrite as necessary so that sr_dirs points to the
 % appropriate places and the library paths are correct.
 
-% this is just our lab server (set in my startup file)
-global synology_dir;
-
+synology_dir = get_synology_dir;  % our lab server
 this_dir = fileparts(mfilename('fullpath'));
 
 % parent folder to all data
