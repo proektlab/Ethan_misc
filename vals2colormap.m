@@ -23,7 +23,7 @@ function [rgb, cmap, crange] = vals2colormap(vals, cmap_fn, crange)
 %
 % Copyright Jason D. Yeatman, June 2012
 
-if ~exist('colormap','var') || isempty(cmap_fn)
+if ~exist('cmap_fn','var') || isempty(cmap_fn)
     cmap_fn = @jet;
 end
 
