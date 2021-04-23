@@ -32,7 +32,9 @@ addpath(fullfile(sr_dirs.script, 'pipeline'));
 addpath(fullfile(synology_dir, 'code', 'SpectralAnalysis'));
 % https://github.com/proektlab/NonNegativeMatrixFactorization
 addpath(fullfile(synology_dir, 'code', 'NonNegativeMatrixFactorization'));
-% https://github.com/bastibe/Violinplot-Matlab  (optional)
+% https://github.com/bastibe/Violinplot-Matlab
 addpath(fullfile(synology_dir, 'code', 'Plotting', 'Violinplot-Matlab'));
+% https://github.com/raacampbell/sigstar
+addpath(fullfile(synology_dir, 'code', 'Plotting', 'sigstar'));
 
 end
