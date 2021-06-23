@@ -4,7 +4,6 @@ function sr_dirs = prepSR
 % appropriate places and the library paths are correct.
 
 synology_dir = get_synology_dir;  % our lab server
-this_dir = fileparts(mfilename('fullpath'));
 
 % parent folder to all data
 sr_dirs.project = fullfile(synology_dir, 'brenna', 'States_rats');
@@ -22,7 +21,7 @@ sr_dirs.snippits = fullfile(sr_dirs.project, 'Snippits');
 sr_dirs.results = fullfile(sr_dirs.project, 'forEthan', 'spec-state-trans');
 
 % root folder of the spec-state-trans repository
-sr_dirs.script = fullfile(this_dir, '..', 'spec-state-trans');
+sr_dirs.script = sr_dirs.results;
 
 addpath(sr_dirs.script);
 addpath(fullfile(sr_dirs.script, 'pipeline'));
