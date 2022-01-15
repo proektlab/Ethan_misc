@@ -42,6 +42,7 @@ if ~isempty(optargs) && isa(optargs{1}, 'matlab.graphics.axis.Axes')
 else
     ax = gca;
 end
+newplot;
 
 if ~isempty(optargs) && isvector(optargs{1}) && isnumeric(optargs{1})
     assert(length(optargs{1}) == n_pts, 'X axis is the wrong length');
@@ -72,7 +73,7 @@ ylims_all = [-0.5, 0.5] + (1:n_vecs)';
 all_classes = cell2mat(class_vecs);
 classes = unique(all_classes(~isnan(all_classes)));
 n_classes = length(classes);
-colors = jet(n_classes);
+ax.Colormap = jet(n_classes);
 
 tsteps = diff(xaxis);
 dt = min(tsteps);
@@ -81,7 +82,6 @@ before_gap = [tsteps > dt, false];
 after_gap = [false, before_gap(1:end-1)];
 
 h = gobjects(n_classes, 1);
-newplot;
 
 for kC = 1:n_classes
     class = classes(kC);
@@ -111,7 +111,7 @@ for kC = 1:n_classes
     X = cell2mat(X);
     Y = cell2mat(Y);
 
-    h(kC) = patch(ax, X, Y, colors(kC, :), 'LineStyle', 'none', 'DisplayName', num2str(class));
+    h(kC) = patch(ax, X, Y, kC, 'LineStyle', 'none', 'DisplayName', num2str(class), 'CDataMapping', 'direct');
 end
 
 axis tight;
