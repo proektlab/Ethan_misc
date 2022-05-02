@@ -8,7 +8,7 @@ rep_nums = cellfun(@height, outer_table.data);
 
 for kCol = 1:length(nondata_cols)
     col_name = nondata_cols{kCol};
-    new_table.(col_name) = repelem(outer_table.(col_name), rep_nums);
+    new_table.(col_name) = repelem(outer_table.(col_name), rep_nums, 1);
 end
 
 end
