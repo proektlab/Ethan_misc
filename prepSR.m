@@ -1,5 +1,5 @@
 function sr_dirs = prepSR
-% Setup for workign on States_rats i.e. spec-state-trans
+% Setup for working on States_rats i.e. spec-state-trans
 % For non-Proekt Lab users: modify/rewrite as necessary so that sr_dirs points to the
 % appropriate places and the library paths are correct.
 
