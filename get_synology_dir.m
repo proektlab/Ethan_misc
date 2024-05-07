@@ -3,8 +3,10 @@ function synology_dir = get_synology_dir
 
 if ispc
     synology_dir = 'Z:';
-else
+elseif exist('/synology', 'dir')
     synology_dir = '/synology';
+else
+    synology_dir = '/mnt/synology';
 end
 
 end
