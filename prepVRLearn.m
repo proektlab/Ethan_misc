@@ -1,7 +1,8 @@
 function vr_dirs = prepVRLearn
 % Setup for working on VR learning experiment
 
-synology_dir = get_synology_dir;
+[synology_dir, bigdata_dir] = get_synology_dir;
+
 
 % Virmen engine
 vr_dirs.virmen = fullfile(synology_dir, 'code', 'virmen-for-mouse-vr');
@@ -14,5 +15,8 @@ vr_dirs.expcode = fullfile(vr_dirs.project, 'experiment_code');
 
 % Data save directory
 vr_dirs.data = fullfile(vr_dirs.project, 'virmen_data');
+
+% 2p data directory
+vr_dirs.data_2p = fullfile(bigdata_dir, 'eblackwood', '2p_data');
 
 end
