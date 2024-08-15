@@ -1,18 +1,35 @@
-function vr_dirs = prepVRLearn
+function vr_dirs = prepVRLearn(online)
 % Setup for working on VR learning experiment
 
+if ~exist("online", 'var') || isempty(online)
+    online = true;
+end
+
 synology_dir = get_synology_dir;
+matlab_dir = userpath;
 
 % Virmen engine
-vr_dirs.virmen = fullfile(synology_dir, 'code', 'virmen-for-mouse-vr');
+if online
+    vr_dirs.virmen = fullfile(synology_dir, 'code', 'virmen-for-mouse-vr');
+else
+    vr_dirs.virmen = fullfile(matlab_dir, 'virmen-for-mouse-vr');
+end
 add_subdirs_with_exclusions(vr_dirs.virmen, [".git", ".vscode"]);
 
 vr_dirs.project = fullfile(synology_dir, 'eblackwood', 'VR_learning');
 
 % Our custom virmen code
-vr_dirs.expcode = fullfile(vr_dirs.project, 'experiment_code');
+if online
+    vr_dirs.expcode = fullfile(vr_dirs.project, 'experiment_code');
+else
+    vr_dirs.expcode = fullfile(matlab_dir, 'cue-learning-virmen-expcode');
+end
 
 % Data save directory
-vr_dirs.data = fullfile(vr_dirs.project, 'virmen_data');
+if online
+    vr_dirs.data = fullfile(vr_dirs.project, 'virmen_data');
+else
+    vr_dirs.data = fullfile(matlab_dir, '..', 'virmen_data');
+end
 
 end
