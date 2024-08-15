@@ -1,12 +1,16 @@
-function synology_dir = get_synology_dir
+function [synology_dir, bigdata_dir] = get_synology_dir
 % Get location of lab server in filesystem
 
 if ispc
     synology_dir = 'Z:';
-elseif exist('/synology', 'dir')
-    synology_dir = '/synology';
+    bigdata_dir = 'Y:';
 else
-    synology_dir = '/mnt/synology';
+    bigdata_dir = '/mnt/bigdata';
+    if exist('/synology', 'dir')
+    synology_dir = '/synology';
+    else
+        synology_dir = '/mnt/synology';
+    end
 end
 
 end

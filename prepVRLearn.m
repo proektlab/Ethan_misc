@@ -5,8 +5,8 @@ if ~exist("online", 'var') || isempty(online)
     online = true;
 end
 
-synology_dir = get_synology_dir;
 matlab_dir = userpath;
+[synology_dir, bigdata_dir] = get_synology_dir;
 
 % Virmen engine
 if online
@@ -31,5 +31,8 @@ if online
 else
     vr_dirs.data = fullfile(matlab_dir, '..', 'virmen_data');
 end
+
+% 2p data directory
+vr_dirs.data_2p = fullfile(bigdata_dir, 'eblackwood', '2p_data');
 
 end
