@@ -24,6 +24,7 @@ if online
 else
     vr_dirs.expcode = fullfile(matlab_dir, 'cue-learning-virmen-expcode');
 end
+path(vr_dirs.expcode, path);
 
 % Data save directory
 if online
