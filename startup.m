@@ -9,3 +9,8 @@ rng('shuffle');
 
 % necessary on treachery for some reason
 matlabpath(pathdef);
+
+% activate caiman python environment
+if ispc
+    pyenv(fullfile(synology_dir, 'conda_envs_windows', 'caiman', 'python'));
+end
