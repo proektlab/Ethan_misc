@@ -1,4 +1,4 @@
-hfunction h = class_plot(varargin)
+function h = class_plot(varargin)
 % class_plot: colored area plot showing classifications over time
 % class_vecs should be a numeric vector of class assignments; classes are plotted in sorted order.
 % class_vecs can also be va cell of vectors, in whcih case they are stacked
