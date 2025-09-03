@@ -1,7 +1,7 @@
 function h = class_plot(varargin)
 % class_plot: colored area plot showing classifications over time
 % class_vecs should be a numeric vector of class assignments; classes are plotted in sorted order.
-% class_vecs can also be va cell of vectors, in whcih case they are stacked
+% class_vecs can also be a cell of vectors, in whcih case they are stacked
 % on the y axis.
 %
 % Syntax:
@@ -95,7 +95,6 @@ for kC = 1:n_classes
         is_class_start = class_vec(:) == class & ([nan; class_vec(1:end-1)] ~= class | after_gap(:));
         is_class_end = class_vec(:) == class & ([class_vec(2:end); nan] ~= class | before_gap(:));
 
-
         class_start_times = xaxis(is_class_start);
         class_start_times = max(xaxis(1), class_start_times - dt/2);
 
@@ -116,6 +115,7 @@ end
 
 axis tight;
 ylim([ylims_all(1, 1), ylims_all(end, end)]);
+xlim([xaxis(1), xaxis(end)]);
 ax.YDir = 'reverse';
 yticks(1:n_vecs);
 yticklabels(y_labels);

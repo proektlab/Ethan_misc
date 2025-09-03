@@ -3,7 +3,10 @@ function matobj = convert_python_obj(pyobj)
 
 switch class(pyobj)
     case 'py.pandas.core.frame.DataFrame'
-        matobj = table(pyobj);
+        pyobj_table = table(pyobj);
+        matobj = varfun(@convert_python_obj, pyobj_table);
+        % undo change to variable names from varfun
+        matobj.Properties.VariableNames = pyobj_table.Properties.VariableNames;
     case 'py.int'
         matobj = double(pyobj);
     case 'py.str'
@@ -44,6 +47,11 @@ switch class(pyobj)
         end
     otherwise
         matobj = pyobj;
+end
+
+% for residual integer types (when recursing)
+if isinteger(matobj)
+    matobj = double(matobj);
 end
 
 end

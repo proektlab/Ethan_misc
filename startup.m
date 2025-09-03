@@ -11,9 +11,4 @@ rng('shuffle');
 matlabpath(pathdef);
 
 % add other paths
-addpath(genpath2(fullfile(synology_dir, 'eblackwood', 'VR_learning', 'vr_2p_analysis'), '.git'));
-
-% activate caiman python environment
-if ispc
-    pyenv('Version', fullfile(synology_dir, 'conda_envs_windows', 'caiman', 'python'));
-end
+addpath(genpath2(fullfile(synology_dir, 'eblackwood', 'VR_learning', 'vr_2p_analysis', 'matlab_vr2pcode'), '.git'));
