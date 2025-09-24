@@ -11,15 +11,18 @@ switch class(pyobj)
         matobj = double(pyobj);
     case 'py.str'
         matobj = string(pyobj);
+    case 'py.datetime.date'
+        % assume zero time
+        matobj = py.datetime.datetime.combine(pyobj, py.datetime.time());
     case 'py.dict'
         pyobj_struct = struct(pyobj);
         matobj = structfun(@convert_python_obj, pyobj_struct, 'uni', false);
-    case {'py.list', 'py.tuple'}
+    case {'py.list', 'py.tuple', 'cell'}
         pyobj_cell = cell(pyobj);
         matobj = cellfun(@convert_python_obj, pyobj_cell, 'uni', false);
         if all(cellfun(@isscalar, matobj))
             try
-                matobj = cell2mat(matobj);
+                matobj = reshape(vertcat(matobj{:}), size(matobj));
             catch  % ignore any error
             end
         end

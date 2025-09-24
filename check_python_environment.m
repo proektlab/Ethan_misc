@@ -1,14 +1,18 @@
-function env = check_python_environment(envname, test_command)
+function env = check_python_environment(envname, test_command, python_path)
 
 arguments
     envname (1,1) string = "caiman"
-    test_command (1,1) string = ""  % Python command to test 
+    test_command (1,1) string = ""  % Python command to test
+    python_path (1,:) char = ''  % Path to python passed explicitly
 end
 
 % If a python environment is not loaded, attempts to initialize it with the camian environment
 curr_pyenv = pyenv;
 if curr_pyenv.Status ~= "Loaded"
-    if ispc
+    if ~isempty(python_path)
+        fprintf('Initializing python environment from %s\n', python_path);
+        env = pyenv('Version', python_path);
+    elseif ispc
         [~, hostname] = system('hostname');
         if envname == "caiman" && strcmpi(strtrim(hostname), 'lust')
             % use local caiman environment if we're on Lust
