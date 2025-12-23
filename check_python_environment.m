@@ -1,19 +1,19 @@
 function env = check_python_environment(envname, test_command, python_path)
 
 arguments
-    envname (1,1) string = "caiman"
-    test_command (1,1) string = ""  % Python command to test
+    envname (1,:) string = "caiman"
+    test_command (1,:) char = ''  % Python command to test
     python_path (1,:) char = ''  % Path to python passed explicitly
 end
 
 % If a python environment is not loaded, attempts to initialize it with the camian environment
 curr_pyenv = pyenv;
 if curr_pyenv.Status ~= "Loaded"
+    [~, hostname] = system('hostname');
     if ~isempty(python_path)
         fprintf('Initializing python environment from %s\n', python_path);
         env = pyenv('Version', python_path);
     elseif ispc
-        [~, hostname] = system('hostname');
         if envname == "caiman" && strcmpi(strtrim(hostname), 'lust')
             % use local caiman environment if we're on Lust
             python_path = 'C:\Users\ethan\AppData\Local\miniforge3\envs\mesviz\python';
@@ -24,10 +24,12 @@ if curr_pyenv.Status ~= "Loaded"
 
         fprintf('Initializing python environment from %s\n', python_path);
         env = pyenv('Version', python_path);
+    elseif contains(hostname, 'sorcery')
+        python_path = '/home/ethan/miniforge3/envs/mescore/bin/python';
+        fprintf('Initializing python environment from %s\n', python_path);
+        env = pyenv('Version', python_path);
     else
-        % python might still be usable, but we don't know the path
-        
-        % TODO try something simple to test
+        % python might still be usable, but we don't know the path        
         warning('Python must be initialized to load data from caiman');
         env = curr_pyenv;
     end
@@ -39,7 +41,7 @@ if strlength(env.Version) == 0
     error('Python environment "%s" needed, but none was found', envname);
 end
 
-if strlength(test_command) > 0
+if ~isempty(test_command)
     try pyrun(test_command)
     catch me
         if isa(me, 'matlab.exception.PyException')

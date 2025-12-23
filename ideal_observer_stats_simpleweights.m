@@ -2,12 +2,8 @@ function [acc, dprime, counts, thresh_info] = ideal_observer_stats(c1_values, c2
 % Find maximum accuracy for decoding any 2 classes based on 1-dimensional values.
 % If values are matrices, operates along the 2nd dimension (independently for each row).
 % If weighted is true, weight to correct for bias in number of class 1 vs class 2 values.
-% If c1_weights and c2_weights are provided, they should both be provided and the same size as
-%   c1_values/c2_values. They override "weighted" in giving the weight for each sample and are not
-%   further corrected for any nans in the data (appropriate weights taking nans into account can be
-%   generated using concat_and_weight_data).
 % If directed is true, assumes that the values are greater for class 1 than class 2;
-%   otherwise the direction is determined from the data. 
+%   otherwise the direction is determined from the data.
 %
 % Thresholds directly on (rather than between) the values are also considered, with an expected
 % success rate of 0.5 * the number of tied samples with that value.
@@ -43,68 +39,48 @@ if opts.flatten_vectors && isvector(c1_values) && isvector(c2_values)
     c2_values = c2_values(:)';
 end
 
-[nrow, maxobs_c1] = size(c1_values);
-if size(c2_values, 1) ~= nrow
+if size(c1_values, 1) ~= size(c2_values, 1)
     error('Number of rows must match between class 1 and 2');
 end
 
-maxobs_c2 = size(c2_values, 2);
-maxobs = maxobs_c1 + maxobs_c2;
+counts = struct;
 
 % number of actual data points to consider (non-NaN)
 n1 = sum(~isnan(c1_values), 2);
 n2 = sum(~isnan(c2_values), 2);
 n = n1 + n2;
-
-counts = struct;
 counts.n_c1 = n1;
 counts.n_c2 = n2;
-
-if nrow == 0
-    acc = zeros(0, 1);
-    dprime = zeros(0, 1);
-    counts.n_correct_c1 = zeros(0, 1);
-    counts.n_correct_c2 = zeros(0, 1);
-    thresh_info = struct('thresh', zeros(0, 1), 'b_invert', logical.empty(0, 1));
-    return;
-end
-
-% make weights for each sample
-if size(opts.c1_weights, 1) > 0
-    assert(~isempty(opts.c2_weights), 'c1_weights and c2_weights must either both or neither be provided');
-    assert(isequal(size(opts.c1_weights), size(c1_values)), 'c1_weights must have same size as c1_values');
-    assert(isequal(size(opts.c2_weights), size(c2_values)), 'c2_weights must have same size as c2_values');
-    c1_weights = opts.c1_weights;
-    c2_weights = opts.c2_weights;
-else
-    assert(isempty(opts.c2_weights), 'c1_weights and c2_weights must either both or neither be provided');
-
-    if opts.weighted
-        c1_weights = repmat(n2, 1, maxobs_c1); % instead of 1 ./ n1 - avoid small floating point errors
-        c2_weights = repmat(n1, 1, maxobs_c2);
-    else
-        c1_weights = ones(nrow, maxobs_c1);
-        c2_weights = ones(nrow, maxobs_c2);
-    end
-end
-
-c1_weights(isnan(c1_values)) = 0;
-c2_weights(isnan(c2_values)) = 0;
-
 
 % obtain a boolean matrix of whether each observation is in class 1,
 % sorted by observation value for each row independently
 % NaNs go at the end and won't be considered (masked by b_valid)
-gt_c1 = [true(nrow, maxobs_c1), false(nrow, maxobs_c2)];
+gt_c1 = [true(size(c1_values)), false(size(c2_values))];
+[nrow, maxobs] = size(gt_c1);
 [sorted_values, sortorder] = sort([c1_values, c2_values], 2, MissingPlacement="last");
 inds = sub2ind(size(gt_c1), repmat((1:nrow)', 1, maxobs), sortorder);
 gt_c1 = gt_c1(inds);
 b_valid = (1:maxobs) <= n; % matrix same size as gt_c1
-% sort the weights as well
-weights = [c1_weights, c2_weights];
-weights = weights(inds);
 
-% TODO fix the rest of this by accumulating weighted n wrong
+% TODO - finish changing the definition of c1_weight and c2_weight and TEST that it still works!
+% if opts.weighted
+%     c1_weight = repmat(n2, 1, size(c1_values, 2)); % instead of 1 ./ n1 - avoid small floating point errors
+%     c2_weight = repmat(n1, 1, size(c2_values, 2));
+% else
+%     c1_weight = ones(nrow, size(c1_values, 2));
+%     c2_weight = ones(nrow, size(c2_values, 2));
+% end
+% 
+% c1_weight(isnan(c1_values)) = nan;
+% c2_weight(isnan(c2_values)) = nan;
+
+if opts.weighted
+    c1_weight = n2; % instead of 1 ./ n1 - avoid small floating point errors
+    c2_weight = n1;
+else
+    c1_weight = ones(nrow, 1);
+    c2_weight = ones(nrow, 1);
+end
 
 % scalar best values for each row
 min_w_wrong = inf(nrow, 1);
@@ -118,31 +94,31 @@ all_best = struct(...
     'b_invert', repmat({logical.empty(1,0)}, nrow, 1));
 
     
-    function update_improved_rows(row_inds, n_wrong_c1, n_wrong_c2, w_wrong, switch_inds, thresholds, b_invert)
+    function update_improved_rows(row_inds, n_wrong_c1, n_wrong_c2, switch_inds, thresholds, b_invert)
         % test whether the rows at row_inds are improved given n_wrong values
         % and update min_w_wrong, min_acc_diff, and all_best for improved and tied rows.
         row_inds = reshape(row_inds, 1, []);
-        these_w_wrong = w_wrong(row_inds, 1);
+        w_wrong = n_wrong_c1(row_inds, 1) .* c1_weight(row_inds, 1) + n_wrong_c2(row_inds, 1) .* c2_weight(row_inds, 1);
         acc_diff = abs(n_wrong_c1(row_inds, 1) ./ n1(row_inds, 1) - n_wrong_c2(row_inds, 1) ./ n2(row_inds, 1));
 
         b_improve = false(length(row_inds), 1);
         b_tie = false(length(row_inds), 1);
-        b_worse_w = these_w_wrong > min_w_wrong(row_inds, 1);
+        b_worse_w = w_wrong > min_w_wrong(row_inds, 1);
         if all(b_worse_w)
             return
         end
 
-        b_tie_w = these_w_wrong == min_w_wrong(row_inds, 1);
+        b_tie_w = w_wrong == min_w_wrong(row_inds, 1);
         if any(b_tie_w)
             acc_diff_tie = acc_diff(b_tie_w);
             b_tie(b_tie_w) = acc_diff_tie == min_acc_diff(row_inds(b_tie_w), 1);
             b_improve(b_tie_w) = acc_diff_tie < min_acc_diff(row_inds(b_tie_w), 1);
         end
 
-        b_improve(these_w_wrong < min_w_wrong(row_inds, 1)) = true;
+        b_improve(w_wrong < min_w_wrong(row_inds, 1)) = true;
         
         % update minima
-        min_w_wrong(row_inds(b_improve)) = these_w_wrong(b_improve);
+        min_w_wrong(row_inds(b_improve)) = w_wrong(b_improve);
         min_acc_diff(row_inds(b_improve)) = acc_diff(b_improve);
 
         % update all_best for improved and tied rows        
@@ -173,33 +149,29 @@ all_best = struct(...
 % w = "weighted number"
 n_wrong_c1_pos = zeros(nrow, 1);
 n_wrong_c2_pos = n2;
-w_wrong_pos = sum(c2_weights, 2);
 
 % same but if we put the threshold on the value
 % (resets to the between-value threshold value when not in the middle of a tie)
 n_wrong_c1_pos_onval = n_wrong_c1_pos;
 n_wrong_c2_pos_onval = n_wrong_c2_pos;
-w_wrong_pos_onval = w_wrong_pos;
 kT_onval = zeros(nrow, 1);
 
 % as a special case, if n = 0, set threshold to nan rather than -inf
 start_thresh = nan(nrow, 1);
 start_thresh(n > 0) = -inf;
 
-update_improved_rows(1:nrow, n_wrong_c1_pos, n_wrong_c2_pos, w_wrong_pos, ...
+update_improved_rows(1:nrow, n_wrong_c1_pos, n_wrong_c2_pos, ...
     zeros(nrow, 1), start_thresh, false);
 
 if ~opts.directed
     % if we categorize them all as class 2 (negative threshold)
     n_wrong_c1_neg = n1;
     n_wrong_c2_neg = zeros(nrow, 1);
-    w_wrong_neg = sum(c1_weights, 2);
     
     n_wrong_c1_neg_onval = n_wrong_c1_neg;
     n_wrong_c2_neg_onval = n_wrong_c2_neg;
-    w_wrong_neg_onval = w_wrong_neg;
 
-    update_improved_rows(1:nrow, n_wrong_c1_neg, n_wrong_c2_neg, w_wrong_neg, ...
+    update_improved_rows(1:nrow, n_wrong_c1_neg, n_wrong_c2_neg, ...
         zeros(nrow, 1), start_thresh, true);
 end
 
@@ -221,45 +193,36 @@ for kT = 1:maxobs
         thresholds(kT < n) = mean(sorted_values(kT < n, [kT, kT+1]), 2);
     end
 
-    % what changes by categorizing this one as class 2
+    % what changes by categorizing this one as class 2 (or class 1)
     was_c1 = b_valid(:, kT) & gt_c1(:, kT);
     was_c2 = b_valid(:, kT) & ~gt_c1(:, kT);
 
     n_wrong_c1_pos(was_c1) = n_wrong_c1_pos(was_c1) + 1;
-    w_wrong_pos(was_c1) = w_wrong_pos(was_c1) + weights(was_c1, kT);
     n_wrong_c2_pos(was_c2) = n_wrong_c2_pos(was_c2) - 1;
-    w_wrong_pos(was_c2) = w_wrong_pos(was_c2) - weights(was_c2, kT);
 
     % also consider putting the threshold directly on this value
     n_wrong_c1_pos_onval(was_c1) = n_wrong_c1_pos_onval(was_c1) + 0.5;
-    w_wrong_pos_onval(was_c1) = w_wrong_pos_onval(was_c1) + 0.5 .* weights(was_c1, kT);
     n_wrong_c2_pos_onval(was_c2) = n_wrong_c2_pos_onval(was_c2) - 0.5;
-    w_wrong_pos_onval(was_c2) = w_wrong_pos_onval(was_c2) - 0.5 .* weights(was_c2, kT);
 
     % update all_best
     if any(b_update)
-        update_improved_rows(update_inds, n_wrong_c1_pos, n_wrong_c2_pos, w_wrong_pos, kT, thresholds, false);
-        update_improved_rows(update_inds, n_wrong_c1_pos_onval, n_wrong_c2_pos_onval, w_wrong_pos_onval, ...
+        update_improved_rows(update_inds, n_wrong_c1_pos, n_wrong_c2_pos, kT, thresholds, false);
+        update_improved_rows(update_inds, n_wrong_c1_pos_onval, n_wrong_c2_pos_onval, ...
             kT_onval, sorted_values(:, kT), false);
     end
 
     if ~opts.directed
         % try negative classifier
-        % what changes by categorizing this one as class 1
         n_wrong_c2_neg(was_c2) = n_wrong_c2_neg(was_c2) + 1;
-        w_wrong_neg(was_c2) = w_wrong_neg(was_c2) + weights(was_c2, kT);
         n_wrong_c1_neg(was_c1) = n_wrong_c1_neg(was_c1) - 1;
-        w_wrong_neg(was_c1) = w_wrong_neg(was_c1) - weights(was_c1, kT);
 
         % consider putting the threshold directly on value
         n_wrong_c2_neg_onval(was_c2) = n_wrong_c2_neg_onval(was_c2) + 0.5;
-        w_wrong_neg_onval(was_c2) = w_wrong_neg_onval(was_c2) + 0.5 .* weights(was_c2, kT);
         n_wrong_c1_neg_onval(was_c1) = n_wrong_c1_neg_onval(was_c1) - 0.5;
-        w_wrong_neg_onval(was_c1) = w_wrong_neg_onval(was_c1) - 0.5 .* weights(was_c1, kT);
 
         if any(b_update)
-            update_improved_rows(update_inds, n_wrong_c1_neg, n_wrong_c2_neg, w_wrong_neg, kT, thresholds, true);
-            update_improved_rows(update_inds, n_wrong_c1_neg_onval, n_wrong_c2_neg_onval, w_wrong_neg_onval, ...
+            update_improved_rows(update_inds, n_wrong_c1_neg, n_wrong_c2_neg, kT, thresholds, true);
+            update_improved_rows(update_inds, n_wrong_c1_neg_onval, n_wrong_c2_neg_onval, ...
                 kT_onval, sorted_values(:, kT), true);
         end
     end
@@ -268,12 +231,10 @@ for kT = 1:maxobs
     kT_onval(~istie) = kT;
     n_wrong_c1_pos_onval(~istie) = n_wrong_c1_pos(~istie);
     n_wrong_c2_pos_onval(~istie) = n_wrong_c2_pos(~istie);
-    w_wrong_pos_onval(~istie) = w_wrong_pos(~istie);
 
     if ~opts.directed
         n_wrong_c1_neg_onval(~istie) = n_wrong_c1_neg(~istie);
         n_wrong_c2_neg_onval(~istie) = n_wrong_c2_neg(~istie);
-        w_wrong_neg_onval(~istie) = w_wrong_neg(~istie);
     end
 end
 
@@ -287,7 +248,7 @@ best_n_wrong_c1 = arrayfun(@(s_best, ind) s_best.n_wrong_c1(ind), all_best, ind_
 best_n_wrong_c2 = arrayfun(@(s_best, ind) s_best.n_wrong_c2(ind), all_best, ind_to_take);
 b_invert = arrayfun(@(s_best, ind) s_best.b_invert(ind), all_best, ind_to_take);
 
-acc = 1 - min_w_wrong ./ sum(weights, 2);
+acc = 1 - min_w_wrong ./ (c1_weight .* n1 + c2_weight .* n2);
 counts.n_correct_c1 = counts.n_c1 - best_n_wrong_c1;
 counts.n_correct_c2 = counts.n_c2 - best_n_wrong_c2;
 

@@ -22,8 +22,12 @@ if isstring(color)
 end
 
 if isnumeric(color)
-    assert(size(color, 2) == 3 && ismatrix(color), 'Invalid size for RGB color input');
-    rgb = color;
+    if numel(color) == 3
+        rgb = reshape(color, 1, 3);
+    else
+        assert(size(color, 2) == 3 && ismatrix(color), 'Invalid size for RGB color input');
+        rgb = color;
+    end
     return;
 end
 
