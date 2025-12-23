@@ -1,11 +1,16 @@
 function [acc, dprime, counts, thresh_info] = ideal_observer_stats(c1_values, c2_values, opts)
 % Find maximum accuracy for decoding any 2 classes based on 1-dimensional values.
 % If values are matrices, operates along the 2nd dimension (independently for each row).
+% Data can be passed in 2 different ways:
+%   - As a single matrix, with the boolean row vector or matrix is_class1 giving the class of each 
+%     column (if a matrix, different rows can have different classes);
+%   - As 2 matrices c1_values and c2_values with the same number of rows.
 % If weighted is true, weight to correct for bias in number of class 1 vs class 2 values.
-% If c1_weights and c2_weights are provided, they should both be provided and the same size as
-%   c1_values/c2_values. They override "weighted" in giving the weight for each sample and are not
-%   further corrected for any nans in the data (appropriate weights taking nans into account can be
-%   generated using concat_and_weight_data).
+% If weights is provided, it should be the same size as values (or [c1_values, c2_values]).
+%   This overrides "weighted" in giving the weight for each sample and is not
+%   further corrected for any nans in the data, except weights of nan values are set to 0 when
+%   computing total weights. (Appropriate weights taking nans into account can be generated using
+%   concat_and_weight_data.)
 % If directed is true, assumes that the values are greater for class 1 than class 2;
 %   otherwise the direction is determined from the data. 
 %
@@ -30,30 +35,37 @@ function [acc, dprime, counts, thresh_info] = ideal_observer_stats(c1_values, c2
 
 arguments
     c1_values double
-    c2_values double
+    c2_values double = [];
+    opts.is_class1 (:,:) logical = logical.empty(0,0)
     opts.weighted (1,1) logical = false
     opts.directed (1,1) logical = false
-    opts.flatten_vectors (1,1) logical = true
-    opts.c1_weights double = []  % manual weights matrix, overrides opts.weighted
-    opts.c2_weights double = []  % must be provided if c1_weights is provided and vice versa
+    opts.weights double = []  % manual weights matrix, overrides opts.weighted
 end
 
-if opts.flatten_vectors && isvector(c1_values) && isvector(c2_values)
-    c1_values = c1_values(:)'; 
-    c2_values = c2_values(:)';
+nrow = size(c1_values, 1);
+if all(size(opts.is_class1) == 0)  % c2_values provided (or whole matrix is empty)
+    assert(size(c2_values, 1) == nrow, 'Number of rows must match between class 1 and 2');
+    values = [c1_values, c2_values];
+    gt_c1 = [true(size(c1_values)), false(size(c2_values))];
+else
+    assert(all(size(c2_values) == 0), 'Cannot pass both c2_values and is_class1');
+    values = c1_values;
+    if ~isequal(size(values), size(opts.is_class1))
+        if isvector(opts.is_class1) && length(opts.is_class1) == size(values, 2)
+            gt_c1 = repmat(opts.is_class1(:)', nrow, 1);
+        else
+            error('Size of is_class1 must match values, or be a vector with the same # of columns');
+        end
+    else
+        gt_c1 = opts.is_class1;
+    end
 end
 
-[nrow, maxobs_c1] = size(c1_values);
-if size(c2_values, 1) ~= nrow
-    error('Number of rows must match between class 1 and 2');
-end
-
-maxobs_c2 = size(c2_values, 2);
-maxobs = maxobs_c1 + maxobs_c2;
+maxobs = size(values, 2);
 
 % number of actual data points to consider (non-NaN)
-n1 = sum(~isnan(c1_values), 2);
-n2 = sum(~isnan(c2_values), 2);
+n1 = sum(~isnan(values) & gt_c1, 2);
+n2 = sum(~isnan(values) & ~gt_c1, 2);
 n = n1 + n2;
 
 counts = struct;
@@ -70,38 +82,32 @@ if nrow == 0
 end
 
 % make weights for each sample
-if size(opts.c1_weights, 1) > 0
-    assert(~isempty(opts.c2_weights), 'c1_weights and c2_weights must either both or neither be provided');
-    assert(isequal(size(opts.c1_weights), size(c1_values)), 'c1_weights must have same size as c1_values');
-    assert(isequal(size(opts.c2_weights), size(c2_values)), 'c2_weights must have same size as c2_values');
-    c1_weights = opts.c1_weights;
-    c2_weights = opts.c2_weights;
+if size(opts.weights, 1) > 0
+    assert(isequal(size(opts.weights), size(values)), 'weights must have same size as values');
+    weights = opts.weights;
 else
-    assert(isempty(opts.c2_weights), 'c1_weights and c2_weights must either both or neither be provided');
-
     if opts.weighted
-        c1_weights = repmat(n2, 1, maxobs_c1); % instead of 1 ./ n1 - avoid small floating point errors
-        c2_weights = repmat(n1, 1, maxobs_c2);
+        % make weights matrix that weights classes inversely to their prevalence (for each row)
+        weights = zeros(nrow, maxobs);
+        [row_ind_c1, ~] = find(gt_c1);
+        weights(gt_c1) = n2(row_ind_c1); % instead of 1 ./ n1 - avoid small floating point errors
+        [row_ind_c2, ~] = find(~gt_c1);
+        weights(~gt_c1) = n1(row_ind_c2);
     else
-        c1_weights = ones(nrow, maxobs_c1);
-        c2_weights = ones(nrow, maxobs_c2);
+        weights = ones(nrow, maxobs);
     end
 end
 
-c1_weights(isnan(c1_values)) = 0;
-c2_weights(isnan(c2_values)) = 0;
-
+weights(isnan(values)) = 0;
 
 % obtain a boolean matrix of whether each observation is in class 1,
 % sorted by observation value for each row independently
 % NaNs go at the end and won't be considered (masked by b_valid)
-gt_c1 = [true(nrow, maxobs_c1), false(nrow, maxobs_c2)];
-[sorted_values, sortorder] = sort([c1_values, c2_values], 2, MissingPlacement="last");
+[sorted_values, sortorder] = sort(values, 2, MissingPlacement="last");
 inds = sub2ind(size(gt_c1), repmat((1:nrow)', 1, maxobs), sortorder);
 gt_c1 = gt_c1(inds);
 b_valid = (1:maxobs) <= n; % matrix same size as gt_c1
 % sort the weights as well
-weights = [c1_weights, c2_weights];
 weights = weights(inds);
 
 % TODO fix the rest of this by accumulating weighted n wrong
@@ -173,7 +179,7 @@ all_best = struct(...
 % w = "weighted number"
 n_wrong_c1_pos = zeros(nrow, 1);
 n_wrong_c2_pos = n2;
-w_wrong_pos = sum(c2_weights, 2);
+w_wrong_pos = sum(weights .* ~gt_c1, 2);
 
 % same but if we put the threshold on the value
 % (resets to the between-value threshold value when not in the middle of a tie)
@@ -193,7 +199,7 @@ if ~opts.directed
     % if we categorize them all as class 2 (negative threshold)
     n_wrong_c1_neg = n1;
     n_wrong_c2_neg = zeros(nrow, 1);
-    w_wrong_neg = sum(c1_weights, 2);
+    w_wrong_neg = sum(weights .* gt_c1, 2);
     
     n_wrong_c1_neg_onval = n_wrong_c1_neg;
     n_wrong_c2_neg_onval = n_wrong_c2_neg;
@@ -305,8 +311,8 @@ fa_rate = n_fa ./ n2;
 z_hit = norminv(hit_rate);
 z_fa = norminv(fa_rate);
 
-sd_c1 = std(c1_values, 0, 2, "omitmissing");
-sd_c2 = std(c2_values, 0, 2, "omitmissing");
+sd_c1 = arrayfun(@(kR) std(values(kR, gt_c1(kR, :)), "omitmissing"), (1:nrow)');
+sd_c2 = arrayfun(@(kR) std(values(kR, ~gt_c1(kR, :)), "omitmissing"), (1:nrow)');
 mean_diff = sd_c1 .* z_hit - sd_c2 .* z_fa;
 
 rms_sd = sqrt((sd_c1.^2 + sd_c2.^2) ./ 2);
