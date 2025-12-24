@@ -34,8 +34,8 @@ function [acc, dprime, counts, thresh_info] = ideal_observer_stats(c1_values, c2
 %       > the threshold as c2 (all false if directed is true).
 
 arguments
-    c1_values double
-    c2_values double = [];
+    c1_values (:,:) double
+    c2_values (:,:) double = [];
     opts.is_class1 (:,:) logical = logical.empty(0,0)
     opts.weighted (1,1) logical = false
     opts.directed (1,1) logical = false
@@ -188,9 +188,9 @@ n_wrong_c2_pos_onval = n_wrong_c2_pos;
 w_wrong_pos_onval = w_wrong_pos;
 kT_onval = zeros(nrow, 1);
 
-% as a special case, if n = 0, set threshold to nan rather than -inf
+% as a special case, if sum of weights is 0, set threshold to nan rather than -inf
 start_thresh = nan(nrow, 1);
-start_thresh(n > 0) = -inf;
+start_thresh(sum(weights, 2) > 0) = -inf;
 
 update_improved_rows(1:nrow, n_wrong_c1_pos, n_wrong_c2_pos, w_wrong_pos, ...
     zeros(nrow, 1), start_thresh, false);
