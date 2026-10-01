@@ -2,7 +2,7 @@ function matobj = convert_python_obj(pyobj)
 % Recursively convert a python object to MATLAB equivalent (somewhat opinionated)
 
 switch class(pyobj)
-    case 'py.pandas.core.frame.DataFrame'
+    case {'py.pandas.core.frame.DataFrame', 'py.pandas.DataFrame'}
         pyobj_table = table(pyobj);
         matobj = varfun(@convert_python_obj, pyobj_table);
         % undo change to variable names from varfun

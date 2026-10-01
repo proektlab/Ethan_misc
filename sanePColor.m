@@ -146,7 +146,7 @@ shading flat;
 
 function[ey] = linexpand(y)
 %Credit: Benjamin Strom
-ey = [y, 0]; 
+ey = [y(:)', 0]; 
 ey(end) = 2*ey(end-1) - ey(end-2); 
 ey = ey - (ey(end-1) - ey(end-2))/2;
 

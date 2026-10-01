@@ -6,7 +6,7 @@ arguments
     python_path (1,:) char = ''  % Path to python passed explicitly
 end
 
-% If a python environment is not loaded, attempts to initialize it with the camian environment
+% If a python environment is not loaded, attempts to initialize it with the caiman environment
 curr_pyenv = pyenv;
 if curr_pyenv.Status ~= "Loaded"
     [~, hostname] = system('hostname');
@@ -16,7 +16,9 @@ if curr_pyenv.Status ~= "Loaded"
     elseif ispc
         if envname == "caiman" && strcmpi(strtrim(hostname), 'lust')
             % use local caiman environment if we're on Lust
-            python_path = 'C:\Users\ethan\AppData\Local\miniforge3\envs\mesviz\python';
+            python_path = 'C:\DataDrive\Ethan\conda_envs\torch2\python';
+        elseif strcmpi(strtrim(hostname), 'Ethan-HP')  % my laptop
+            python_path = 'C:\Users\ethan\miniforge3\envs\matlab\python';
         else
             synology_dir = get_synology_dir;
             python_path = fullfile(synology_dir, 'conda_envs_windows', envname, 'python');
